@@ -19,6 +19,12 @@ class _hidden_ref(object):
 
 _REF = _hidden_ref() 
 
+cdef extern from "Simplify.h":
+    cdef cppclass vec3f:
+       double x
+       double y
+       double z
+
 cdef extern from "Simplify.h" namespace "Simplify" :
     void simplify_mesh( int target_count, int update_rate, double aggressiveness, 
                         bool verbose, int max_iterations,double alpha, int K, 
@@ -27,12 +33,17 @@ cdef extern from "Simplify.h" namespace "Simplify" :
     vector[vector[int]] getFaces()
     vector[vector[double]] getVertices()
     vector[vector[double]] getNormals()
+    cdef cppclass Triangle:
+        int v[3]
+        int attr
+        int material
+    cdef cppclass Vertex:
+        vec3f p
+    vector[Triangle] triangles
+    vector[Vertex] vertices
+
 
 cdef class Simplify : 
-
-    cdef int[:,:] faces_mv
-    cdef double[:,:] vertices_mv
-    cdef double[:,:] normals_mv
 
     cdef vector[vector[int]] triangles_cpp
     cdef vector[vector[double]] vertices_cpp
@@ -80,7 +91,7 @@ cdef class Simplify :
 
         return verts, faces, norms
 
-    cpdef void setMesh(self, vertices, faces, face_colors=None):
+    cpdef void setMesh(self, vertices_np, faces_np, face_colors=None):
         """Method to set the mesh of the simplifier object.
         
         Arguments
@@ -93,19 +104,9 @@ cdef class Simplify :
             array of face_colors of shape (n_faces,3)
             this is not yet implemented
         """
-        _REF.faces = faces 
-        _REF.verts = vertices
-        # We have to clear the vectors to avoid overflow when using the simplify object
-        # multiple times
-        self.triangles_cpp.clear()
-        self.vertices_cpp.clear()
-        self.normals_cpp.clear()
         # Here we will need some checks, just to make sure the right objets are passed
-        self.faces_mv = faces.astype(dtype="int32", subok=False, copy=False)
-        self.vertices_mv = vertices.astype(dtype="float64", subok=False, copy=False)
-        self.triangles_cpp = setFacesNogil(self.faces_mv, self.triangles_cpp)
-        self.vertices_cpp = setVerticesNogil(self.vertices_mv, self.vertices_cpp)
-        setMeshFromExt(self.vertices_cpp, self.triangles_cpp)
+        setVerticesNogil(vertices_np.astype(dtype="float64", subok=False, copy=False), vertices)
+        setFacesNogil(faces_np.astype(dtype="int32", subok=False, copy=False), triangles)
 
     cpdef void simplify_mesh(self, int target_count = 100, int update_rate = 5, 
         double aggressiveness=7., max_iterations = 100, bool verbose=True,  
@@ -143,56 +144,45 @@ cdef class Simplify :
             ----
             threshold = alpha*pow( iteration + K, agressiveness)
         """
-        N_start = self.faces_mv.shape[0]
         t_start = _time()
         simplify_mesh(target_count, update_rate, aggressiveness, verbose, max_iterations, alpha, K,
                       lossless, threshold_lossless, preserve_border)
         t_end = _time()
         N_end = getFaces().size()
 
-        if verbose:
-            print('simplified mesh in {} seconds from {} to {} triangles'.format(
-                round(t_end-t_start,4), N_start, N_end)
-            )
 
 @cython.boundscheck(False)
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
 @cython.nonecheck(False)
-cdef vector[vector[double]] setVerticesNogil(double[:,:] vertices, vector[vector[double]] vector_vertices )nogil:
+cdef void setVerticesNogil(double[:,:] & vertices, vector[Vertex] & vector_vertices ) noexcept nogil:
     """nogil function for filling the vector of vertices, "vector_vertices",
-    with the data found in the memory view of the array "vertices" 
+    with the data found in the memory view of the array "vertices"
     """
-    cdef vector[double] vertex 
-    vector_vertices.reserve(vertices.shape[0])
+    vector_vertices.resize(vertices.shape[0])
 
     cdef size_t i = 0
-    cdef size_t j = 0
     for i in range(vertices.shape[0]):
-        vertex.clear()
-        for j in range(3):  
-            vertex.push_back(vertices[i,j])
-        vector_vertices.push_back(vertex)
-    return vector_vertices
+        vector_vertices[i].p.x = vertices[i, 0];
+        vector_vertices[i].p.y = vertices[i, 1];
+        vector_vertices[i].p.z = vertices[i, 2];
 
 @cython.boundscheck(False)
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
 @cython.nonecheck(False)
-cdef vector[vector[int]] setFacesNogil(int[:,:] faces, vector[vector[int]] vector_faces )nogil:
+cdef void setFacesNogil(int[:,:] & faces, vector[Triangle] & vector_faces ) noexcept nogil:
     """nogil function for filling the vector of faces, "vector_faces",
     with the data found in the memory view of the array "faces"
     """
-    cdef vector[int] triangle 
-    vector_faces.reserve(faces.shape[0]);
+    vector_faces.resize(faces.shape[0]);
 
     cdef size_t i = 0
     cdef size_t j = 0
     for i in range(faces.shape[0]):
-        triangle.clear()
-        for j in range(3):  
-            triangle.push_back(faces[i,j])
-        vector_faces.push_back(triangle)
-    return vector_faces
+        for j in range(3):
+            vector_faces[i].v[j] = faces[i, j]
 
+        vector_faces[i].attr = 0
+        vector_faces[i].material = -1
 
 
 
