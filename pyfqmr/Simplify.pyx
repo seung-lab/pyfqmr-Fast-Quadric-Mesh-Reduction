@@ -105,8 +105,19 @@ cdef class Simplify :
             this is not yet implemented
         """
         # Here we will need some checks, just to make sure the right objets are passed
-        setVerticesNogil(vertices_np.astype(dtype="float64", subok=False, copy=False), vertices)
-        setFacesNogil(faces_np.astype(dtype="int32", subok=False, copy=False), triangles)
+        if vertices_np.dtype == np.float32:
+            setVerticesNogil_float(vertices_np, vertices)
+        elif vertices_np.dtype == np.float64:
+            setVerticesNogil_double(vertices_np, vertices)
+        else:
+            setVerticesNogil_double(vertices_np.astype(dtype="float64", subok=False, copy=False), vertices)
+
+        if faces_np.dtype == np.int32:
+            setFacesNogil_int(faces_np, triangles)
+        elif faces_np.dtype == np.uint32:
+            setFacesNogil_uint(faces_np, triangles)
+        else:
+            setFacesNogil_int(faces_np.astype(dtype="int32", subok=False, copy=False), triangles)
 
     cpdef void simplify_mesh(self, int target_count = 100, int update_rate = 5, 
         double aggressiveness=7., max_iterations = 100, bool verbose=True,  
@@ -154,7 +165,7 @@ cdef class Simplify :
 @cython.boundscheck(False)
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
 @cython.nonecheck(False)
-cdef void setVerticesNogil(double[:,:] & vertices, vector[Vertex] & vector_vertices ) noexcept nogil:
+cdef void setVerticesNogil_double(double[:,:] & vertices, vector[Vertex] & vector_vertices ) noexcept nogil:
     """nogil function for filling the vector of vertices, "vector_vertices",
     with the data found in the memory view of the array "vertices"
     """
@@ -169,7 +180,40 @@ cdef void setVerticesNogil(double[:,:] & vertices, vector[Vertex] & vector_verti
 @cython.boundscheck(False)
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
 @cython.nonecheck(False)
-cdef void setFacesNogil(int[:,:] & faces, vector[Triangle] & vector_faces ) noexcept nogil:
+cdef void setVerticesNogil_float(float[:,:] & vertices, vector[Vertex] & vector_vertices ) noexcept nogil:
+    """nogil function for filling the vector of vertices, "vector_vertices",
+    with the data found in the memory view of the array "vertices"
+    """
+    vector_vertices.resize(vertices.shape[0])
+
+    cdef size_t i = 0
+    for i in range(vertices.shape[0]):
+        vector_vertices[i].p.x = vertices[i, 0];
+        vector_vertices[i].p.y = vertices[i, 1];
+        vector_vertices[i].p.z = vertices[i, 2];
+
+@cython.boundscheck(False)
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
+@cython.nonecheck(False)
+cdef void setFacesNogil_int(int[:,:] & faces, vector[Triangle] & vector_faces ) noexcept nogil:
+    """nogil function for filling the vector of faces, "vector_faces",
+    with the data found in the memory view of the array "faces"
+    """
+    vector_faces.resize(faces.shape[0]);
+
+    cdef size_t i = 0
+    cdef size_t j = 0
+    for i in range(faces.shape[0]):
+        for j in range(3):
+            vector_faces[i].v[j] = faces[i, j]
+
+        vector_faces[i].attr = 0
+        vector_faces[i].material = -1
+
+@cython.boundscheck(False)
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
+@cython.nonecheck(False)
+cdef void setFacesNogil_uint(unsigned int[:,:] & faces, vector[Triangle] & vector_faces ) noexcept nogil:
     """nogil function for filling the vector of faces, "vector_faces",
     with the data found in the memory view of the array "faces"
     """
