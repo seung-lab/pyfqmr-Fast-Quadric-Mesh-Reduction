@@ -315,8 +315,8 @@ namespace Simplify
     COLOR = 8
   };
   struct Triangle { int v[3];double err[4];int deleted,dirty,attr;vec3f n;vec3f uvs[3];int material; };
-  struct Vertex { vec3f p;int tstart,tcount;SymetricMatrix q;int border;};
-  struct Ref { int tid,tvertex; };
+  struct Vertex { vec3f p;size_t tstart,tcount;SymetricMatrix q;int border;};
+  struct Ref { size_t tid,tvertex; };
   std::vector<Triangle> triangles;
   std::vector<Vertex> vertices;
   std::vector<Ref> refs;
@@ -422,12 +422,12 @@ namespace Simplify
           // not flipped, so remove edge
           v0.p=p;
           v0.q=v1.q+v0.q;
-          int tstart=refs.size();
+          size_t tstart=refs.size();
 
           update_triangles(i0,v0,deleted0,deleted_triangles);
           update_triangles(i0,v1,deleted1,deleted_triangles);
 
-          int tcount=refs.size()-tstart;
+          size_t tcount=refs.size()-tstart;
 
           if(tcount<=v0.tcount)
           {
