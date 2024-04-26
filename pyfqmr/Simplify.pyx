@@ -169,6 +169,7 @@ cdef void setVerticesNogil_double(double[:,:] & vertices, vector[Vertex] & vecto
     """nogil function for filling the vector of vertices, "vector_vertices",
     with the data found in the memory view of the array "vertices"
     """
+    vector_vertices.clear()
     vector_vertices.resize(vertices.shape[0])
 
     cdef size_t i = 0
@@ -184,6 +185,7 @@ cdef void setVerticesNogil_float(float[:,:] & vertices, vector[Vertex] & vector_
     """nogil function for filling the vector of vertices, "vector_vertices",
     with the data found in the memory view of the array "vertices"
     """
+    vector_vertices.clear()
     vector_vertices.resize(vertices.shape[0])
 
     cdef size_t i = 0
@@ -199,6 +201,7 @@ cdef void setFacesNogil_int(int[:,:] & faces, vector[Triangle] & vector_faces ) 
     """nogil function for filling the vector of faces, "vector_faces",
     with the data found in the memory view of the array "faces"
     """
+    vector_faces.clear();
     vector_faces.resize(faces.shape[0]);
 
     cdef size_t i = 0
@@ -217,6 +220,7 @@ cdef void setFacesNogil_uint(unsigned int[:,:] & faces, vector[Triangle] & vecto
     """nogil function for filling the vector of faces, "vector_faces",
     with the data found in the memory view of the array "faces"
     """
+    vector_faces.clear();
     vector_faces.resize(faces.shape[0]);
 
     cdef size_t i = 0
