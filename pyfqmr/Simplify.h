@@ -650,7 +650,7 @@ namespace Simplify
       Triangle &t=triangles[i];
       loopj(0,3) vertices[t.v[j]].tcount++;
     }
-    int tstart=0;
+    size_t tstart=0;
     loopi(0,vertices.size())
     {
       Vertex &v=vertices[i];
