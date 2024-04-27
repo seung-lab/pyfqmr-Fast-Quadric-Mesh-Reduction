@@ -332,6 +332,7 @@ namespace Simplify
   void update_triangles(int i0,Vertex &v,std::vector<int> &deleted,int &deleted_triangles);
   void update_mesh(int iteration);
   void compact_mesh();
+  void release_memory();
   //
   // Main simplification function
   //
@@ -776,6 +777,13 @@ namespace Simplify
       loopj(0,3)t.v[j]=vertices[t.v[j]].tstart;
     }
     vertices.resize(dst);
+  }
+
+  void release_memory()
+  {
+    std::vector<Triangle>().swap(triangles);
+    std::vector<Vertex>().swap(vertices);
+    std::vector<Ref>().swap(refs);
   }
 
   // Error between vertex and Quadric

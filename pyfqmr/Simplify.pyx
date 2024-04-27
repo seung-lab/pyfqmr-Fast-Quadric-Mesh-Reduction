@@ -33,6 +33,7 @@ cdef extern from "Simplify.h" namespace "Simplify" :
     vector[vector[int]] getFaces()
     vector[vector[double]] getVertices()
     vector[vector[double]] getNormals()
+    void release_memory()
     cdef cppclass Triangle:
         int v[3]
         int attr
@@ -90,6 +91,9 @@ cdef class Simplify :
                 norms[i,j] = normals_cpp[i][j]
 
         return verts, faces, norms
+
+    def clear(self):
+        release_memory()
 
     cpdef void setMesh(self, vertices_np, faces_np, face_colors=None):
         """Method to set the mesh of the simplifier object.
