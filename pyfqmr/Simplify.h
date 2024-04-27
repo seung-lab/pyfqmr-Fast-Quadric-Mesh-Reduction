@@ -341,8 +341,8 @@ namespace Simplify
   //                 more iterations yield higher quality
   //
 
-  void simplify_mesh(int target_count, int update_rate=5, double agressiveness=7, 
-                     bool verbose=false, int max_iterations=100, double alpha = 0.000000001, 
+  int simplify_mesh(int target_count, int update_rate=5, double agressiveness=7,
+                     bool verbose=false, int max_iterations=100, double alpha = 0.000000001,
                      int K = 3, bool lossless=false, double threshold_lossless = 0.0001,
                      bool preserve_border = false)
   {
@@ -356,9 +356,9 @@ namespace Simplify
     int deleted_triangles=0;
     std::vector<int> deleted0,deleted1;
     int triangle_count=triangles.size();
-    //int iteration = 0;
+    int iteration = 0;
     //loop(iteration,0,100)
-    for (int iteration = 0; iteration < max_iterations; iteration ++)
+    for (iteration = 0; iteration < max_iterations; iteration ++)
     {
       if(triangle_count-deleted_triangles<=target_count)break;
 
@@ -450,9 +450,10 @@ namespace Simplify
     }
     // clean up mesh
     compact_mesh();
+    return iteration;
   } //simplify_mesh()
 
-  void simplify_mesh_lossless(bool verbose=false, double epsilon=1e-3, int max_iterations = 9999)
+  int simplify_mesh_lossless(bool verbose=false, double epsilon=1e-3, int max_iterations = 9999)
   {
     // init
     loopi(0,triangles.size()) 
@@ -463,9 +464,9 @@ namespace Simplify
     int deleted_triangles=0;
     std::vector<int> deleted0,deleted1;
     int triangle_count=triangles.size();
-    //int iteration = 0;
+    int iteration = 0;
     //loop(iteration,0,100)
-    for (int iteration = 0; iteration < max_iterations; iteration ++)
+    for (iteration = 0; iteration < max_iterations; iteration ++)
     {
       // update mesh constantly
       update_mesh(iteration);
@@ -543,6 +544,7 @@ namespace Simplify
     } //for each iteration
     // clean up mesh
     compact_mesh();
+    return iteration;
   } //simplify_mesh_lossless()
 
 

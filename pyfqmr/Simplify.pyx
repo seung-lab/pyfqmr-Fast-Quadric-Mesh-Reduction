@@ -26,7 +26,7 @@ cdef extern from "Simplify.h":
        double z
 
 cdef extern from "Simplify.h" namespace "Simplify" :
-    void simplify_mesh( int target_count, int update_rate, double aggressiveness, 
+    int simplify_mesh( int target_count, int update_rate, double aggressiveness,
                         bool verbose, int max_iterations,double alpha, int K, 
                         bool lossless, double threshold_lossless, bool preserve_border)
     void setMeshFromExt(vector[vector[double]] vertices, vector[vector[int]] faces)
@@ -119,7 +119,7 @@ cdef class Simplify :
         else:
             setFacesNogil_int(faces_np.astype(dtype="int32", subok=False, copy=False), triangles)
 
-    cpdef void simplify_mesh(self, int target_count = 100, int update_rate = 5, 
+    cpdef int simplify_mesh(self, int target_count = 100, int update_rate = 5,
         double aggressiveness=7., max_iterations = 100, bool verbose=True,  
         bool lossless = False, double threshold_lossless=1e-3, double alpha = 1e-9, 
         int K = 3, bool preserve_border = True):
@@ -156,10 +156,12 @@ cdef class Simplify :
             threshold = alpha*pow( iteration + K, agressiveness)
         """
         t_start = _time()
-        simplify_mesh(target_count, update_rate, aggressiveness, verbose, max_iterations, alpha, K,
+        iteration = simplify_mesh(target_count, update_rate, aggressiveness, verbose, max_iterations, alpha, K,
                       lossless, threshold_lossless, preserve_border)
         t_end = _time()
         N_end = getFaces().size()
+
+        return iteration
 
 
 @cython.boundscheck(False)
