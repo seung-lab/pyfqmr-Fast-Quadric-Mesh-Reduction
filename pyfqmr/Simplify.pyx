@@ -45,10 +45,6 @@ cdef extern from "Simplify.h" namespace "Simplify" :
 
 cdef class Simplify : 
 
-    cdef vector[vector[int]] triangles_cpp
-    cdef vector[vector[double]] vertices_cpp
-    cdef vector[vector[double]] normals_cpp
-    
     def __cinit__(self):
         pass
 
@@ -65,13 +61,17 @@ cdef class Simplify :
         norms : numpy.ndarray
             array of normals of shape (n_faces,3)
         """
-        self.triangles_cpp = getFaces()
-        self.vertices_cpp = getVertices()
-        self.normals_cpp = getNormals()
+        cdef vector[vector[int]] triangles_cpp
+        cdef vector[vector[double]] vertices_cpp
+        cdef vector[vector[double]] normals_cpp
 
-        cdef size_t N_t = self.triangles_cpp.size()
-        cdef size_t N_v = self.vertices_cpp.size()
-        cdef size_t N_n = self.normals_cpp.size()
+        triangles_cpp = getFaces()
+        vertices_cpp = getVertices()
+        normals_cpp = getNormals()
+
+        cdef size_t N_t = triangles_cpp.size()
+        cdef size_t N_v = vertices_cpp.size()
+        cdef size_t N_n = normals_cpp.size()
         cdef np.ndarray[int, ndim=2] faces = np.zeros((N_t, 3), dtype=np.int32)
         cdef np.ndarray[double, ndim=2] verts = np.zeros((N_v, 3), dtype=np.float64)
         cdef np.ndarray[double, ndim=2] norms = np.zeros((N_n, 3), dtype=np.float64)
@@ -81,13 +81,13 @@ cdef class Simplify :
 
         for i in range(N_t):
             for j in range(3):
-                faces[i,j] = self.triangles_cpp[i][j]
+                faces[i,j] = triangles_cpp[i][j]
         for i in range(N_v):
             for j in range(3):
-                verts[i,j] = self.vertices_cpp[i][j]
+                verts[i,j] = vertices_cpp[i][j]
         for i in range(N_n):
             for j in range(3):
-                norms[i,j] = self.normals_cpp[i][j]
+                norms[i,j] = normals_cpp[i][j]
 
         return verts, faces, norms
 
