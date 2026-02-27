@@ -6,7 +6,7 @@ cimport cython
 from libcpp.vector cimport vector
 from libcpp cimport bool
 
-from time import time as _time
+from time import monotonic as _time
 
 cimport numpy as np
 import numpy as np
