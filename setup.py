@@ -8,15 +8,17 @@ import numpy as np
 
 extensions = [
     Extension(
-    name         = "pyfqmr.Simplify",        # name/path of generated .so file
-    sources      = ["pyfqmr/Simplify.pyx"],  # cython generated cpp file
-    include_dirs = [ np.get_include() ],    # ensure numpy can find headers
-    language     = "c++"),                  # tells python that the language of the extension is c++
-    ]
+        name         = "pyfqmr.Simplify",        # name/path of generated .so file
+        sources      = ["pyfqmr/Simplify.pyx"],  # cython generated cpp file
+        include_dirs = [ np.get_include() ],    # ensure numpy can find headers
+        language     = "c++",
+        extra_compile_args = ['-std=c++11'],
+    ),
+]
 
 setup(
-    ext_modules      = extensions,
-    )
+    ext_modules = extensions,
+)
 
 
 
