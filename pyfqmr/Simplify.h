@@ -386,7 +386,7 @@ namespace Simplify
 				if (t.deleted) continue;
 				if (t.dirty) continue;
 
-				loopj(0,3) 
+				loopj(0,3) {
 					if (t.err[j] < threshold) {
 						int i0=t.v[ j     ]; Vertex &v0 = vertices[i0];
 						int i1=t.v[(j+1)%3]; Vertex &v1 = vertices[i1];
@@ -433,6 +433,7 @@ namespace Simplify
 						v0.tcount=tcount;
 						break;
 					}
+				}
 
 				// done?
 				if (lossless && (deleted_triangles <= 0)) {
