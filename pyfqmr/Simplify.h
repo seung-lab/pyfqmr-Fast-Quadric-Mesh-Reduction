@@ -1135,3 +1135,7 @@ namespace Simplify
 	}
 };
 ///////////////////////////////////////////
+
+#undef loopi
+#undef loopj
+#undef loopk
