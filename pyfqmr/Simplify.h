@@ -10,14 +10,7 @@
 //https://github.com/sp4cerat/Fast-Quadric-Mesh-S;
 // 5/2016: Chris Rorden created minimal version for OSX/Linux/Windows compile
 
-//#include <iostream>
-//#include <stddef.h>
-//#include <functional>
-//#include <sys/stat.h>
-//#include <stdbool.h>
 #include <string.h>
-//#include <ctype.h>
-//#include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <map>
