@@ -983,7 +983,7 @@ namespace Simplify
 					has_uv = true;
 				}
 				else {
-					printf("Unrecognized sequence.")
+					printf("Unrecognized sequence.");
 					exit(0);
 				}
 
