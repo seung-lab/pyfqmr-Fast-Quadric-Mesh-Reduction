@@ -85,7 +85,7 @@ Parameters of the **`simplify\_mesh`** method that can be tuned.
 -  **threshold\_lossless**
     Maximal error after which a vertex is not deleted, only when the lossless flag is set to True.
 -  **verbose**
-    Falg controlling verbosity
+    Flag controlling verbosity
 
 Controlling the lossless reduction algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
