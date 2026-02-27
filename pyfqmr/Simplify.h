@@ -1100,12 +1100,12 @@ namespace Simplify
 		if (!mtllib.empty()) {
 			fprintf(file, "mtllib %s\n", mtllib.c_str());
 		}
-		loopi(0,vertices.size()) {
+		loopi(ZERO, vertices.size()) {
 			fprintf(file, "v %g %g %g\n", vertices[i].p.x,vertices[i].p.y,vertices[i].p.z); // more compact: remove trailing zeros
 		}
 
 		if (has_uv) {
-			loopi(0, triangles.size()) {
+			loopi(ZERO, triangles.size()) {
 				if(!triangles[i].deleted) {
 					fprintf(file, "vt %g %g\n", triangles[i].uvs[0].x, triangles[i].uvs[0].y);
 					fprintf(file, "vt %g %g\n", triangles[i].uvs[1].x, triangles[i].uvs[1].y);
@@ -1115,7 +1115,7 @@ namespace Simplify
 		}
 
 		int uv = 1;
-		loopi(0,triangles.size()) {
+		loopi(ZERO, triangles.size()) {
 			if(!triangles[i].deleted) {
 				if (triangles[i].material != cur_material) {
 					cur_material = triangles[i].material;
