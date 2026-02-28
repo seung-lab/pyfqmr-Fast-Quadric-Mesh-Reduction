@@ -294,7 +294,7 @@ class SymetricMatrix {
 
 namespace Simplify
 {
-	// Global Variables & Strctures
+	// Global Variables & Structures
 	enum Attributes {
 		NONE = 0,
 		NORMAL = 2,
