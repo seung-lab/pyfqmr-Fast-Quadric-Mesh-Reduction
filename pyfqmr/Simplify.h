@@ -304,9 +304,9 @@ namespace Simplify
 	struct Triangle { 
 		int v[3];
 		double err[4];
-		int deleted;
-		int dirty;
-		int attr;
+		bool deleted;
+		bool dirty;
+		uint8_t attr;
 		vec3f n;
 		vec3f uvs[3];
 		int material; 
