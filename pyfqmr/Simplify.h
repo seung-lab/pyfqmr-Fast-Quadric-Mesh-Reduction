@@ -903,8 +903,8 @@ namespace Simplify
 		long file_size = ftell(fn);
 		rewind(fn);
 		
-		vertices.reserve(file_size / 100);
-		triangles.reserve(file_size / 60);
+		vertices.reserve(file_size / 10);
+		triangles.reserve(file_size / 10);
 		
 		char line[1000];
 		int vertex_cnt = 0;
