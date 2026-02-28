@@ -901,6 +901,13 @@ namespace Simplify
 			return;
 		}
 
+		fseek(fn, 0, SEEK_END);
+		long file_size = ftell(fn);
+		rewind(fn);
+
+		long num_vertices_estimate = file_size / 10;
+		vertices.reserve(num_vertices_estimate);
+
 		char line[1000];
 		memset(line, 0, 1000);
 		int vertex_cnt = 0;
