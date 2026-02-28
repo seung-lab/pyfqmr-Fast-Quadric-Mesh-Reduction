@@ -889,119 +889,101 @@ namespace Simplify
 		vertices.clear();
 		triangles.clear();
 		
-		FILE* fn;
-		if (filename == NULL) { 
+		if (filename == NULL || filename[0] == 0) {
 			return;
 		}
-		if ((char)filename[0] == 0) {
+		
+		FILE* fn = fopen(filename, "rb");
+		if (fn == NULL) {
+			printf("File %s not found!\n", filename);
 			return;
 		}
-		if ((fn = fopen(filename, "rb")) == NULL) {
-			printf ( "File %s not found!\n" ,filename );
-			return;
-		}
-
+		
 		fseek(fn, 0, SEEK_END);
 		long file_size = ftell(fn);
 		rewind(fn);
-
-		long num_vertices_estimate = file_size / 10;
-		vertices.reserve(num_vertices_estimate);
-
+		
+		vertices.reserve(file_size / 100);
+		triangles.reserve(file_size / 60);
+		
 		char line[1000];
-		memset(line, 0, 1000);
 		int vertex_cnt = 0;
 		int material = -1;
 		std::map<std::string, int> material_map;
 		std::vector<vec3f> uvs;
-		std::vector<std::vector<int> > uvMap;
-
-		while (fgets(line, 1000, fn) != NULL) {
-			Vertex v;
-			vec3f uv;
-
-			// not important
+		std::vector<std::vector<int>> uvMap;
+		
+		while (fgets(line, sizeof(line), fn) != NULL) {
+			char *p, *end;
+			
 			if (strncmp(line, "mtllib", 6) == 0) {
 				mtllib = trimwhitespace(&line[7]);
 			}
-
-			// not important
-			if (strncmp(line, "usemtl", 6) == 0) { 
-				std::string usemtl = trimwhitespace(&line[7]); 
+			else if (strncmp(line, "usemtl", 6) == 0) {
+				std::string usemtl = trimwhitespace(&line[7]);
 				if (material_map.find(usemtl) == material_map.end()) {
-					material_map[usemtl] = materials.size();  
-					materials.push_back(usemtl);  
-				} 
-				material = material_map[usemtl];  
-			}
-
-			if (line[0] == 'v' && line[1] == 't') {
-				if (line[2] == ' ') {
-					if (
-						sscanf(line,"vt %lf %lf",&uv.x,&uv.y) == 2
-					) {
-						uv.z = 0;
-						uvs.push_back(uv);
-					}
-					else if (
-						sscanf(line,"vt %lf %lf %lf", &uv.x,&uv.y,&uv.z) == 3
-					) {
-						uvs.push_back(uv);
-					}
+					material_map[usemtl] = materials.size();
+					materials.push_back(usemtl);
 				}
+				material = material_map[usemtl];
 			}
-			else if (line[0] == 'v') {
-				if (line[1] == ' ') {
-					if (
-						sscanf(line,"v %lf %lf %lf", &v.p.x, &v.p.y, &v.p.z) == 3
-					) {
-						vertices.push_back(v);
-					}
-				}
+			else if (line[0] == 'v' && line[1] == 't' && line[2] == ' ') {
+				vec3f uv;
+				p = line + 3;
+				uv.x = strtof(p, &end); if (end == p) continue; p = end;
+				uv.y = strtof(p, &end); if (end == p) continue; p = end;
+				uv.z = strtof(p, &end); // optional, ok if it fails
+				if (end == p) uv.z = 0.0f;
+				uvs.push_back(uv);
 			}
-
-			int integers[9];
-			if (line[0] == 'f') {
+			else if (line[0] == 'v' && line[1] == ' ') {
+				Vertex v;
+				p = line + 2;
+				v.p.x = strtof(p, &end); if (end == p) continue; p = end;
+				v.p.y = strtof(p, &end); if (end == p) continue; p = end;
+				v.p.z = strtof(p, &end); if (end == p) continue;
+				vertices.push_back(v);
+			}
+			else if (line[0] == 'f') {
 				Triangle t;
 				bool tri_ok = false;
 				bool has_uv = false;
-
-				if (sscanf(line,"f %d %d %d", &integers[0],&integers[1],&integers[2]) == 3) {
+				int integers[9];
+				
+				if (sscanf(line,"f %d %d %d",
+					&integers[0],&integers[1],&integers[2]) == 3) {
 					tri_ok = true;
 				}
-				else if (
-					sscanf(line,"f %d// %d// %d//", &integers[0],&integers[1],&integers[2]) == 3) {
+				else if (sscanf(line,"f %d// %d// %d//",
+					&integers[0],&integers[1],&integers[2]) == 3) {
 					tri_ok = true;
 				}
-				else if (
-					sscanf(line,"f %d//%d %d//%d %d//%d",
+				else if (sscanf(line,"f %d//%d %d//%d %d//%d",
 					&integers[0],&integers[3],
 					&integers[1],&integers[4],
 					&integers[2],&integers[5]) == 6) {
-
 					tri_ok = true;
 				}
-				else if (
-					sscanf(line,"f %d/%d/%d %d/%d/%d %d/%d/%d",
+				else if (sscanf(line,"f %d/%d/%d %d/%d/%d %d/%d/%d",
 					&integers[0],&integers[6],&integers[3],
 					&integers[1],&integers[7],&integers[4],
 					&integers[2],&integers[8],&integers[5]) == 9) {
-
 					tri_ok = true;
 					has_uv = true;
 				}
 				else {
-					printf("Unrecognized sequence.");
+					printf("Unrecognized face: %s", line);
+					fclose(fn);
 					exit(0);
 				}
-
+				
 				if (tri_ok) {
 					t.v[0] = integers[0]-1-vertex_cnt;
 					t.v[1] = integers[1]-1-vertex_cnt;
 					t.v[2] = integers[2]-1-vertex_cnt;
 					t.attr = 0;
-
-					if ( process_uv && has_uv ) {
+					
+					if (process_uv && has_uv) {
 						std::vector<int> indices;
 						indices.push_back(integers[6]-1-vertex_cnt);
 						indices.push_back(integers[7]-1-vertex_cnt);
