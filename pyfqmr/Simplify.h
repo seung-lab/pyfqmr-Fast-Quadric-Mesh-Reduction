@@ -301,9 +301,26 @@ namespace Simplify
 		TEXCOORD = 4,
 		COLOR = 8
 	};
-	struct Triangle { int v[3];double err[4];int deleted,dirty,attr;vec3f n;vec3f uvs[3];int material; };
-	struct Vertex { vec3f p;int tstart,tcount;SymetricMatrix q;int border;};
-	struct Ref { int tid,tvertex; };
+	struct Triangle { 
+		int v[3];
+		double err[4];
+		int deleted;
+		int dirty;
+		int attr;
+		vec3f n;
+		vec3f uvs[3];
+		int material; 
+	};
+	struct Vertex { 
+		vec3f p;
+		int tstart;
+		int tcount;
+		SymetricMatrix q;
+		int border;
+	};
+	struct Ref { 
+		int tid, tvertex; 
+	};
 	std::vector<Triangle> triangles;
 	std::vector<Vertex> vertices;
 	std::vector<Ref> refs;
