@@ -26,11 +26,11 @@
 constexpr size_t ZERO = 0;
 
 struct vec3f {
-	double x, y, z;
+	float x, y, z;
 
 	inline vec3f( void ) {}
 
-	inline vec3f( const double X, const double Y, const double Z )
+	inline vec3f( const float X, const float Y, const float Z )
 	{ x = X; y = Y; z = Z; }
 
 	inline vec3f operator + ( const vec3f& a ) const
@@ -39,7 +39,7 @@ struct vec3f {
 	inline vec3f operator += ( const vec3f& a ) const
 	{ return vec3f( x + a.x, y + a.y, z + a.z ); }
 
-	inline vec3f operator * ( const double a ) const
+	inline vec3f operator * ( const float a ) const
 	{ return vec3f( x * a, y * a, z * a ); }
 
 	inline vec3f operator * ( const vec3f a ) const
@@ -57,10 +57,10 @@ struct vec3f {
 	inline vec3f operator - ( const vec3f& a ) const
 	{ return vec3f( x - a.x, y - a.y, z - a.z ); }
 
-	inline vec3f operator / ( const double a ) const
+	inline vec3f operator / ( const float a ) const
 	{ return vec3f( x / a, y / a, z / a ); }
 
-	inline double dot( const vec3f& a ) const
+	inline float dot( const vec3f& a ) const
 	{ return a.x*x + a.y*y + a.z*z; }
 
 	inline vec3f cross( const vec3f& a , const vec3f& b )
@@ -71,7 +71,7 @@ struct vec3f {
 		return *this;
 	}
 
-	inline double angle( const vec3f& v )
+	inline float angle( const vec3f& v )
 	{
 		vec3f a = v , b = *this;
 		double dot = v.x*x + v.y*y + v.z*z;
@@ -80,10 +80,10 @@ struct vec3f {
 		double input = dot  / len;
 		if (input<-1) input=-1;
 		if (input>1) input=1;
-		return (double) acos ( input );
+		return (float) acos ( input );
 	}
 
-	inline double angle2( const vec3f& v , const vec3f& w )
+	inline float angle2( const vec3f& v , const vec3f& w )
 	{
 		vec3f a = v, b = *this;
 		double dot = a.x*b.x + a.y*b.y + a.z*b.z;
@@ -93,27 +93,27 @@ struct vec3f {
 		vec3f plane; plane.cross( b,w );
 
 		if ( plane.x * a.x + plane.y * a.y + plane.z * a.z > 0 ) {
-			return (double) -acos ( dot  / len );
+			return (float) -acos ( dot  / len );
 		}
 
-		return (double) acos ( dot  / len );
+		return (float) acos ( dot  / len );
 	}
 
-	inline vec3f rot_x( double a )
+	inline vec3f rot_x( float a )
 	{
 		double yy = cos ( a ) * y + sin ( a ) * z;
 		double zz = cos ( a ) * z - sin ( a ) * y;
 		y = yy; z = zz;
 		return *this;
 	}
-	inline vec3f rot_y( double a )
+	inline vec3f rot_y( float a )
 	{
 		double xx = cos ( -a ) * x + sin ( -a ) * z;
 		double zz = cos ( -a ) * z - sin ( -a ) * x;
 		x = xx; z = zz;
 		return *this;
 	}
-	inline void clamp( double min, double max )
+	inline void clamp( float min, float max )
 	{
 		if (x<min) x=min;
 		if (y<min) y=min;
@@ -224,20 +224,20 @@ vec3f interpolate(
 	return out;
 }
 
-double min(double v1, double v2) {
+float min(float v1, float v2) {
 	return fmin(v1,v2);
 }
 
 
 class SymetricMatrix {
 	public:
-	SymetricMatrix(double c=0) { loopi(0,10) m[i] = c;  }
+	SymetricMatrix(float c=0) { loopi(0,10) m[i] = c;  }
 
 	SymetricMatrix(
-		double m11, double m12, double m13, double m14,
-					double m22, double m23, double m24,
-								double m33, double m34,
-											double m44
+		float m11, float m12, float m13, float m14,
+					float m22, float m23, float m24,
+								float m33, float m34,
+											float m44
 	) {
 		 m[0] = m11;  m[1] = m12;  m[2] = m13;  m[3] = m14;
 					m[4] = m22;  m[5] = m23;  m[6] = m24;
@@ -247,10 +247,10 @@ class SymetricMatrix {
 
 	// Make plane
 	SymetricMatrix(
-		const double a, 
-		const double b,
-		const double c,
-		const double d
+		const float a, 
+		const float b,
+		const float c,
+		const float d
 	) {
 		m[0] = a*a;  m[1] = a*b;  m[2] = a*c;  m[3] = a*d;
 			m[4] = b*b;  m[5] = b*c;  m[6] = b*d;
@@ -258,15 +258,15 @@ class SymetricMatrix {
 					m[9 ] = d*d;
 	}
 
-	double operator[](int c) const { return m[c]; }
+	float operator[](int c) const { return m[c]; }
 
 	// Determinant
-	double det(
+	float det(
 		const int a11, const int a12, const int a13,
 		const int a21, const int a22, const int a23,
 		const int a31, const int a32, const int a33
 	){
-		return static_cast<double>(
+		return static_cast<float>(
 			(m[a11]*m[a22]*m[a33]) + (m[a13]*m[a21]*m[a32]) + (m[a12]*m[a23]*m[a31])
 			- (m[a13]*m[a22]*m[a31]) - (m[a11]*m[a23]*m[a32]) - (m[a12]*m[a21]*m[a33])
 		);
@@ -288,9 +288,11 @@ class SymetricMatrix {
 		return *this;
 	}
 
-	double m[10];
+	float m[10];
 };
 ///////////////////////////////////////////
+
+using vertex_t = uint32_t;
 
 namespace Simplify
 {
@@ -302,8 +304,8 @@ namespace Simplify
 		COLOR = 8
 	};
 	struct Triangle { 
-		int v[3];
-		double err[4];
+		vertex_t v[3];
+		float err[4];
 		bool deleted;
 		bool dirty;
 		uint8_t attr;
@@ -329,8 +331,8 @@ namespace Simplify
 
 	// Helper functions
 
-	double vertex_error(SymetricMatrix q, double x, double y, double z);
-	double calculate_error(int id_v1, int id_v2, vec3f &p_result);
+	double vertex_error(const SymetricMatrix& q, const float x, const float y, const float z);
+	float calculate_error(int id_v1, int id_v2, vec3f &p_result);
 	bool flipped(vec3f p,int i0,int i1,Vertex &v0,Vertex &v1,std::vector<int> &deleted);
 	void update_uvs(int i0,const Vertex &v,const vec3f &p,std::vector<int> &deleted);
 	void update_triangles(int i0,Vertex &v,std::vector<int> &deleted,int &deleted_triangles);
@@ -828,7 +830,17 @@ namespace Simplify
 
 	// Error between vertex and Quadric
 
-	double vertex_error(SymetricMatrix q, double x, double y, double z) {
+	double vertex_error(
+		const SymetricMatrix& q,
+		const float fx,
+		const float fy,
+		const float fz
+	) {
+
+		const double x = fx;
+		const double y = fy;
+		const double z = fz;
+
 		return (
 			q[0]*x*x 
 			+ 2*q[1]*x*y 
@@ -844,7 +856,7 @@ namespace Simplify
 	}
 
 	// Error for one edge
-	double calculate_error(int id_v1, int id_v2, vec3f &p_result) {
+	float calculate_error(int id_v1, int id_v2, vec3f &p_result) {
 		// compute interpolated vertex
 
 		SymetricMatrix q = vertices[id_v1].q + vertices[id_v2].q;
@@ -871,7 +883,7 @@ namespace Simplify
 			if (error2 == error) p_result = p2;
 			if (error3 == error) p_result = p3;
 		}
-		return error;
+		return (float)error;
 	}
 
 	char *trimwhitespace(char *str) {
