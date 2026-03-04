@@ -36,8 +36,8 @@ struct vec3f {
 	inline vec3f operator + ( const vec3f& a ) const
 	{ return vec3f( x + a.x, y + a.y, z + a.z ); }
 
-	inline vec3f operator += ( const vec3f& a ) const
-	{ return vec3f( x + a.x, y + a.y, z + a.z ); }
+	inline vec3f& operator += ( const vec3f& a )
+	{ x += a.x; y += a.y; z += a.z; return *this; }
 
 	inline vec3f operator * ( const float a ) const
 	{ return vec3f( x * a, y * a, z * a ); }
