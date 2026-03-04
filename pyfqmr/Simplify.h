@@ -875,7 +875,8 @@ namespace Simplify
 	double calculate_error(uint32_t id_v1, uint32_t id_v2, vec3f &p_result) {
 		// compute interpolated vertex
 
-		SymmetricMatrix q = vertices[id_v1].q + vertices[id_v2].q;
+		SymmetricMatrix q = vertices[id_v1].q;
+		q += vertices[id_v2].q;
 		bool   border = vertices[id_v1].border & vertices[id_v2].border;
 		double error=0;
 		double det = q.det(0, 1, 2, 1, 4, 5, 2, 5, 7);
