@@ -804,7 +804,7 @@ namespace Simplify
 				n.normalize();
 				t.n = n;
 				loopj(0,3) {
-					vertices[t.v[j]].q = vertices[t.v[j]].q + SymmetricMatrix(n.x,n.y,n.z,-n.dot(p[0]));
+					vertices[t.v[j]].q += SymmetricMatrix(n.x,n.y,n.z,-n.dot(p[0]));
 				}
 			}
 			loopi(ZERO, triangles.size()) {
