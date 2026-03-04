@@ -314,8 +314,8 @@ namespace Simplify
 	};
 	struct Vertex { 
 		vec3f p;
-		int tstart;
-		int tcount;
+		uint32_t tstart;
+		uint32_t tcount;
 		SymmetricMatrix q;
 		bool border;
 	};
@@ -434,12 +434,12 @@ namespace Simplify
 						// not flipped, so remove edge
 						v0.p = p;
 						v0.q = v1.q + v0.q;
-						int tstart = refs.size();
+						auto tstart = refs.size();
 
 						update_triangles(i0,v0,deleted0,deleted_triangles);
 						update_triangles(i0,v1,deleted1,deleted_triangles);
 
-						int tcount = refs.size() - tstart;
+						auto tcount = refs.size() - tstart;
 
 						if (tcount <= v0.tcount) {
 							// save ram
@@ -447,7 +447,7 @@ namespace Simplify
 						}
 						else {
 							// append
-							v0.tstart=tstart;
+							v0.tstart = tstart;
 						}
 
 						v0.tcount=tcount;
@@ -547,12 +547,12 @@ namespace Simplify
 						// not flipped, so remove edge
 						v0.p = p;
 						v0.q = v1.q + v0.q;
-						int tstart = refs.size();
+						auto tstart = refs.size();
 
 						update_triangles(i0,v0,deleted0,deleted_triangles);
 						update_triangles(i0,v1,deleted1,deleted_triangles);
 
-						int tcount = refs.size() - tstart;
+						auto tcount = refs.size() - tstart;
 
 						if (tcount <= v0.tcount) {
 							// save ram
