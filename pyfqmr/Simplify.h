@@ -833,15 +833,10 @@ namespace Simplify
 
 	double vertex_error(
 		const SymmetricMatrix& q,
-		const double fx,
-		const double fy,
-		const double fz
+		const double x,
+		const double y,
+		const double z
 	) {
-
-		const double x = fx;
-		const double y = fy;
-		const double z = fz;
-
 		return (
 			q[0]*x*x 
 			+ 2*q[1]*x*y 
