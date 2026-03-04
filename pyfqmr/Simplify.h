@@ -230,15 +230,15 @@ double min(double v1, double v2) {
 
 class SymmetricMatrix {
 	public:
-	double m[10];
+	float m[10];
 
-	SymmetricMatrix(double c=0) { loopi(0,10) m[i] = c;  }
+	SymmetricMatrix(float c=0) { loopi(0,10) m[i] = c;  }
 
 	SymmetricMatrix(
-		double m11, double m12, double m13, double m14,
-					double m22, double m23, double m24,
-								double m33, double m34,
-											double m44
+		float m11, float m12, float m13, float m14,
+					float m22, float m23, float m24,
+								float m33, float m34,
+											float m44
 	) {
 		m[0] = m11;  m[1] = m12;  m[2] = m13;  m[3] = m14;
 								 m[4] = m22;  m[5] = m23;  m[6] = m24;
@@ -248,10 +248,10 @@ class SymmetricMatrix {
 
 	// Make plane
 	SymmetricMatrix(
-		const double a, 
-		const double b,
-		const double c,
-		const double d
+		const float a, 
+		const float b,
+		const float c,
+		const float d
 	) {
 		m[0] = a*a;  m[1] = a*b;  m[2] = a*c;  m[3] = a*d;
 								 m[4] = b*b;  m[5] = b*c;  m[6] = b*d;
@@ -694,7 +694,6 @@ namespace Simplify
 	}
 
 	// compact triangles, compute edge error and build reference list
-
 	void update_mesh(int iteration) {
 		if (iteration > 0) { // compact triangles
 			int dst = 0;
