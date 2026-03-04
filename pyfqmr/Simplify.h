@@ -319,22 +319,23 @@ namespace Simplify
 		SymmetricMatrix q;
 		bool border;
 	};
-	struct Ref { 
-		int tid, tvertex; 
-	};
+
 	std::vector<Triangle> triangles;
 	std::vector<Vertex> vertices;
-	std::vector<Ref> refs;
-	std::string mtllib; //
-	std::vector<std::string> materials; //
+
+	std::vector<uint32_t> trefs;
+	std::vector<uint8_t> vrefs;
+
+	std::string mtllib;
+	std::vector<std::string> materials;
 
 	// Helper functions
 
 	double vertex_error(const SymmetricMatrix& q, const double x, const double y, const double z);
-	double calculate_error(int id_v1, int id_v2, vec3f &p_result);
-	bool flipped(vec3f p,int i0,int i1,Vertex &v0,Vertex &v1,std::vector<int> &deleted);
-	void update_uvs(int i0,const Vertex &v,const vec3f &p,std::vector<int> &deleted);
-	void update_triangles(int i0,Vertex &v,std::vector<int> &deleted,int &deleted_triangles);
+	double calculate_error(uint32_t id_v1, uint32_t id_v2, vec3f &p_result);
+	bool flipped(vec3f p,uint32_t i0,uint32_t i1,Vertex &v0,Vertex &v1,std::vector<int> &deleted);
+	void update_uvs(uint32_t i0,const Vertex &v,const vec3f &p,std::vector<int> &deleted);
+	void update_triangles(uint32_t i0,Vertex &v,std::vector<int> &deleted, int64_t &deleted_triangles);
 	void update_mesh(int iteration);
 	void compact_mesh();
 
@@ -347,7 +348,7 @@ namespace Simplify
 	//                 more iterations yield higher quality
 	//
 	void simplify_mesh(
-		int target_count, 
+		uint64_t target_count, 
 		int update_rate = 5, 
 		double agressiveness = 7,
 		void (*log)(char*, int) = NULL, 
@@ -363,11 +364,9 @@ namespace Simplify
 		}
 
 		// main iteration loop
-		int deleted_triangles = 0;
+		int64_t deleted_triangles = 0;
 		std::vector<int> deleted0, deleted1;
-		int triangle_count = triangles.size();
-
-		refs.reserve(triangle_count * 3);
+		int64_t triangle_count = triangles.size();
 
 		for (int iteration = 0; iteration < max_iterations; iteration++) {
 			if (triangle_count - deleted_triangles <= target_count) {
@@ -395,7 +394,9 @@ namespace Simplify
 			// target number of triangles reached ? Then break
 			if ((log) && (iteration % 5 == 0)) {
 				char message[128];
-				snprintf(message, 127, "iteration %d - triangles %d threshold %g",iteration,triangle_count-deleted_triangles, threshold);
+				snprintf(message, 127, "iteration %d - triangles %lld threshold %g",
+					iteration, triangle_count-deleted_triangles, threshold
+				);
 				log(message, 128);
 			}
 
@@ -408,14 +409,18 @@ namespace Simplify
 
 				loopj(0,3) {
 					if (t.err[j] < threshold) {
-						int i0=t.v[ j     ]; Vertex &v0 = vertices[i0];
-						int i1=t.v[(j+1)%3]; Vertex &v1 = vertices[i1];
+						auto i0 = t.v[ j     ];
+						Vertex &v0 = vertices[i0];
+						auto i1 = t.v[(j+1)%3];
+						Vertex &v1 = vertices[i1];
+
 						// Border check //Added preserve_border method from issue 14
 						if (preserve_border) {
 							if (v0.border || v1.border) continue; // should keep border vertices
 						}
-						else
-						if (v0.border != v1.border) continue; // base behaviour
+						else if (v0.border != v1.border) {
+							continue; // base behaviour
+						}
 
 						// Compute vertex to collapse to
 						vec3f p;
@@ -423,8 +428,12 @@ namespace Simplify
 						deleted0.resize(v0.tcount); // normals temporarily
 						deleted1.resize(v1.tcount); // normals temporarily
 						// don't remove if flipped
-						if (flipped(p,i0,i1,v0,v1,deleted0)) continue;
-						if (flipped(p,i1,i0,v1,v0,deleted1)) continue;
+						if (flipped(p,i0,i1,v0,v1,deleted0)) {
+							continue;
+						}
+						if (flipped(p,i1,i0,v1,v0,deleted1)) {
+							continue;
+						}
 
 						if ((t.attr & TEXCOORD) == TEXCOORD) {
 							update_uvs(i0,v0,p,deleted0);
@@ -434,16 +443,19 @@ namespace Simplify
 						// not flipped, so remove edge
 						v0.p = p;
 						v0.q = v1.q + v0.q;
-						auto tstart = refs.size();
+						auto tstart = trefs.size();
 
-						update_triangles(i0,v0,deleted0,deleted_triangles);
-						update_triangles(i0,v1,deleted1,deleted_triangles);
+						update_triangles(i0, v0, deleted0, deleted_triangles);
+						update_triangles(i0, v1, deleted1, deleted_triangles);
 
-						auto tcount = refs.size() - tstart;
+						auto tcount = trefs.size() - tstart;
 
 						if (tcount <= v0.tcount) {
 							// save ram
-							if (tcount) memcpy(&refs[v0.tstart], &refs[tstart], tcount*sizeof(Ref));
+							if (tcount) {
+								memcpy(&trefs[v0.tstart], &trefs[tstart], tcount * sizeof(uint32_t));
+								memcpy(&vrefs[v0.tstart], &vrefs[tstart], tcount * sizeof(uint8_t));
+							}
 						}
 						else {
 							// append
@@ -480,7 +492,7 @@ namespace Simplify
 			triangles[i].deleted = 0;
 		}
 		// main iteration loop
-		int deleted_triangles = 0;
+		int64_t deleted_triangles = 0;
 		std::vector<int> deleted0, deleted1;
 
 		for (int iteration = 0; iteration < max_iterations; iteration++) {
@@ -547,17 +559,18 @@ namespace Simplify
 						// not flipped, so remove edge
 						v0.p = p;
 						v0.q = v1.q + v0.q;
-						auto tstart = refs.size();
+						auto tstart = trefs.size();
 
 						update_triangles(i0,v0,deleted0,deleted_triangles);
 						update_triangles(i0,v1,deleted1,deleted_triangles);
 
-						auto tcount = refs.size() - tstart;
+						auto tcount = trefs.size() - tstart;
 
 						if (tcount <= v0.tcount) {
 							// save ram
 							if (tcount) {
-								memcpy(&refs[v0.tstart], &refs[tstart], tcount * sizeof(Ref));
+								memcpy(&trefs[v0.tstart], &trefs[tstart], tcount * sizeof(uint32_t));
+								memcpy(&vrefs[v0.tstart], &vrefs[tstart], tcount * sizeof(uint8_t));
 							}
 						}
 						else {
@@ -582,19 +595,19 @@ namespace Simplify
 	// Check if a triangle flips when this edge is removed
 	bool flipped(
 		vec3f p,
-		int i0,
-		int i1,
+		uint32_t i0,
+		uint32_t i1,
 		Vertex &v0,
 		Vertex &v1,
 		std::vector<int> &deleted
 	) {
 		loopk(0, v0.tcount) {
-			Triangle &t = triangles[refs[v0.tstart+k].tid];
+			Triangle &t = triangles[trefs[v0.tstart+k]];
 			if (t.deleted) continue;
 
-			int s = refs[v0.tstart+k].tvertex;
-			int id1 = t.v[(s+1)%3];
-			int id2 = t.v[(s+2)%3];
+			auto s = vrefs[v0.tstart+k];
+			auto id1 = t.v[(s+1)%3];
+			auto id2 = t.v[(s+2)%3];
 
 			if (id1 == i1 || id2 == i1) { // delete ?
 				deleted[k] = 1;
@@ -622,14 +635,16 @@ namespace Simplify
 	}
 
 	void update_uvs(
-		int i0,
+		uint32_t i0,
 		const Vertex &v,
 		const vec3f &p,
 		std::vector<int> &deleted
 	) {
 		loopk(0, v.tcount) {
-			Ref &r = refs[v.tstart+k];
-			Triangle &t = triangles[r.tid];
+			auto tid = trefs[v.tstart+k];
+			auto tvertex = vrefs[v.tstart+k];
+
+			Triangle &t = triangles[tid];
 			if (t.deleted) {
 				continue;
 			}
@@ -640,21 +655,23 @@ namespace Simplify
 			vec3f p1 = vertices[t.v[0]].p;
 			vec3f p2 = vertices[t.v[1]].p;
 			vec3f p3 = vertices[t.v[2]].p;
-			t.uvs[r.tvertex] = interpolate(p,p1,p2,p3,t.uvs);
+			t.uvs[tvertex] = interpolate(p,p1,p2,p3,t.uvs);
 		}
 	}
 
 	// Update triangle connections and edge error after a edge is collapsed
 	void update_triangles(
-		int i0,
+		uint32_t i0,
 		Vertex &v,
 		std::vector<int> &deleted,
-		int &deleted_triangles
+		int64_t &deleted_triangles
 	) {
 		vec3f p;
 		loopk(0, v.tcount) {
-			Ref &r = refs[v.tstart+k];
-			Triangle &t = triangles[r.tid];
+			auto tid = trefs[v.tstart+k];
+			auto tvertex = vrefs[v.tstart+k];
+
+			Triangle &t = triangles[tid];
 			if (t.deleted) {
 				continue;
 			}
@@ -664,13 +681,15 @@ namespace Simplify
 				continue;
 			}
 
-			t.v[r.tvertex] = i0;
+			t.v[tvertex] = i0;
 			t.dirty = 1;
 			t.err[0] = calculate_error(t.v[0],t.v[1],p);
 			t.err[1] = calculate_error(t.v[1],t.v[2],p);
 			t.err[2] = calculate_error(t.v[2],t.v[0],p);
-			t.err[3] = min(t.err[0],min(t.err[1],t.err[2]));
-			refs.push_back(r);
+			t.err[3] = min(t.err[0], min(t.err[1],t.err[2]));
+			
+			trefs.push_back(tid);
+			vrefs.push_back(tvertex);
 		}
 	}
 
@@ -708,13 +727,15 @@ namespace Simplify
 		}
 
 		// Write References
-		refs.resize(triangles.size()*3);
+		trefs.resize(triangles.size()*3);
+		vrefs.resize(triangles.size()*3);
+
 		loopi(ZERO, triangles.size()) {
 			Triangle &t = triangles[i];
 			loopj(0,3) {
 				Vertex &v = vertices[t.v[j]];
-				refs[v.tstart+v.tcount].tid = i;
-				refs[v.tstart+v.tcount].tvertex = j;
+				trefs[v.tstart+v.tcount] = i;
+				vrefs[v.tstart+v.tcount] = j;
 				v.tcount++;
 			}
 		}
@@ -733,7 +754,7 @@ namespace Simplify
 				vids.clear();
 				
 				loopj(0, v.tcount) {
-					int k = refs[v.tstart+j].tid;
+					int k = trefs[v.tstart+j];
 					Triangle &t = triangles[k];
 					loopk(0,3) {
 						size_t ofs = 0;
@@ -852,7 +873,7 @@ namespace Simplify
 	}
 
 	// Error for one edge
-	double calculate_error(int id_v1, int id_v2, vec3f &p_result) {
+	double calculate_error(uint32_t id_v1, uint32_t id_v2, vec3f &p_result) {
 		// compute interpolated vertex
 
 		SymmetricMatrix q = vertices[id_v1].q + vertices[id_v2].q;
