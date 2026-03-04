@@ -228,13 +228,13 @@ double min(double v1, double v2) {
 	return fmin(v1,v2);
 }
 
-class SymetricMatrix {
+class SymmetricMatrix {
 	public:
 	double m[10];
 
-	SymetricMatrix(double c=0) { loopi(0,10) m[i] = c;  }
+	SymmetricMatrix(double c=0) { loopi(0,10) m[i] = c;  }
 
-	SymetricMatrix(
+	SymmetricMatrix(
 		double m11, double m12, double m13, double m14,
 					double m22, double m23, double m24,
 								double m33, double m34,
@@ -247,7 +247,7 @@ class SymetricMatrix {
 	}
 
 	// Make plane
-	SymetricMatrix(
+	SymmetricMatrix(
 		const double a, 
 		const double b,
 		const double c,
@@ -273,8 +273,8 @@ class SymetricMatrix {
 		);
 	}
 
-	const SymetricMatrix operator+(const SymetricMatrix& n) const {
-		return SymetricMatrix(
+	const SymmetricMatrix operator+(const SymmetricMatrix& n) const {
+		return SymmetricMatrix(
 			m[0]+n[0],   m[1]+n[1],   m[2]+n[2],   m[3]+n[3],
 			m[4]+n[4],   m[5]+n[5],   m[6]+n[6],
 			m[7]+n[7],   m[8]+n[8],
@@ -282,7 +282,7 @@ class SymetricMatrix {
 		);
 	}
 
-	SymetricMatrix& operator+=(const SymetricMatrix& n) {
+	SymmetricMatrix& operator+=(const SymmetricMatrix& n) {
 		m[0]+=n[0];   m[1]+=n[1];   m[2]+=n[2];   m[3]+=n[3];
 		m[4]+=n[4];   m[5]+=n[5];   m[6]+=n[6];   m[7]+=n[7];
 		m[8]+=n[8];   m[9]+=n[9];
@@ -316,7 +316,7 @@ namespace Simplify
 		vec3f p;
 		int tstart;
 		int tcount;
-		SymetricMatrix q;
+		SymmetricMatrix q;
 		int border;
 	};
 	struct Ref { 
@@ -330,7 +330,7 @@ namespace Simplify
 
 	// Helper functions
 
-	double vertex_error(const SymetricMatrix& q, const double x, const double y, const double z);
+	double vertex_error(const SymmetricMatrix& q, const double x, const double y, const double z);
 	double calculate_error(int id_v1, int id_v2, vec3f &p_result);
 	bool flipped(vec3f p,int i0,int i1,Vertex &v0,Vertex &v1,std::vector<int> &deleted);
 	void update_uvs(int i0,const Vertex &v,const vec3f &p,std::vector<int> &deleted);
@@ -771,7 +771,7 @@ namespace Simplify
 		//
 		if (iteration == 0) {
 			loopi(ZERO, vertices.size()) {
-				vertices[i].q = SymetricMatrix(0.0);
+				vertices[i].q = SymmetricMatrix(0.0);
 			}
 
 			loopi(ZERO, triangles.size()) {
@@ -784,7 +784,7 @@ namespace Simplify
 				n.normalize();
 				t.n = n;
 				loopj(0,3) {
-					vertices[t.v[j]].q = vertices[t.v[j]].q + SymetricMatrix(n.x,n.y,n.z,-n.dot(p[0]));
+					vertices[t.v[j]].q = vertices[t.v[j]].q + SymmetricMatrix(n.x,n.y,n.z,-n.dot(p[0]));
 				}
 			}
 			loopi(ZERO, triangles.size()) {
@@ -832,7 +832,7 @@ namespace Simplify
 	// Error between vertex and Quadric
 
 	double vertex_error(
-		const SymetricMatrix& q,
+		const SymmetricMatrix& q,
 		const double fx,
 		const double fy,
 		const double fz
@@ -860,7 +860,7 @@ namespace Simplify
 	double calculate_error(int id_v1, int id_v2, vec3f &p_result) {
 		// compute interpolated vertex
 
-		SymetricMatrix q = vertices[id_v1].q + vertices[id_v2].q;
+		SymmetricMatrix q = vertices[id_v1].q + vertices[id_v2].q;
 		bool   border = vertices[id_v1].border & vertices[id_v2].border;
 		double error=0;
 		double det = q.det(0, 1, 2, 1, 4, 5, 2, 5, 7);
