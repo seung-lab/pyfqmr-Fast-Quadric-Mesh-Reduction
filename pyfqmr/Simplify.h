@@ -48,7 +48,7 @@ struct vec3f {
 	inline vec3f v3 () const
 	{ return vec3f( x , y, z ); }
 
-	inline vec3f& operator=( const vec3f a )
+	inline vec3f& operator = ( const vec3f a )
 	{ x=a.x;y=a.y;z=a.z;return *this; }
 
 	inline vec3f operator / ( const vec3f a ) const
@@ -851,8 +851,8 @@ namespace Simplify
 
 		SymmetricMatrix q = vertices[id_v1].q;
 		q += vertices[id_v2].q;
-		bool   border = vertices[id_v1].border & vertices[id_v2].border;
-		double error=0;
+		bool border = vertices[id_v1].border & vertices[id_v2].border;
+		double error = 0;
 		double det = q.det(0, 1, 2, 1, 4, 5, 2, 5, 7);
 		if (det != 0 && !border) {
 			// q_delta is invertible
