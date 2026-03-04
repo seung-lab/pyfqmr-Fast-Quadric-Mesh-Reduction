@@ -171,26 +171,6 @@ struct vec3f {
 		return *this;
 	}
 	static vec3f normalize( vec3f a );
-
-	static void random_init();
-	static double random_double();
-	static vec3f random();
-
-	static int random_number;
-
-	double random_double_01(double a){
-		double rnf=a*14.434252+a*364.2343+a*4213.45352+a*2341.43255+a*254341.43535+a*223454341.3523534245+23453.423412;
-		int rni=((int)rnf)%100000;
-		return double(rni)/(100000.0f-1.0f);
-	}
-
-	vec3f random01_fxyz(){
-		x=(double)random_double_01(x);
-		y=(double)random_double_01(y);
-		z=(double)random_double_01(z);
-		return *this;
-	}
-
 };
 
 vec3f barycentric(const vec3f &p, const vec3f &a, const vec3f &b, const vec3f &c) {
