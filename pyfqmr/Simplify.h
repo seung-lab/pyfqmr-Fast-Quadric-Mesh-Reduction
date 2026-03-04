@@ -1,6 +1,6 @@
 /////////////////////////////////////////////
 //
-// Mesh Simplification Tutorial
+// Mesh Simplification
 //
 // (C) by Sven Forstmann in 2014
 //
@@ -224,49 +224,50 @@ vec3f interpolate(
 	return out;
 }
 
-float min(float v1, float v2) {
+double min(double v1, double v2) {
 	return fmin(v1,v2);
 }
 
-
 class SymetricMatrix {
 	public:
-	SymetricMatrix(float c=0) { loopi(0,10) m[i] = c;  }
+	double m[10];
+
+	SymetricMatrix(double c=0) { loopi(0,10) m[i] = c;  }
 
 	SymetricMatrix(
-		float m11, float m12, float m13, float m14,
-					float m22, float m23, float m24,
-								float m33, float m34,
-											float m44
+		double m11, double m12, double m13, double m14,
+					double m22, double m23, double m24,
+								double m33, double m34,
+											double m44
 	) {
-		 m[0] = m11;  m[1] = m12;  m[2] = m13;  m[3] = m14;
-					m[4] = m22;  m[5] = m23;  m[6] = m24;
-								 m[7] = m33;  m[8] = m34;
-												m[9] = m44;
+		m[0] = m11;  m[1] = m12;  m[2] = m13;  m[3] = m14;
+								 m[4] = m22;  m[5] = m23;  m[6] = m24;
+								 							m[7] = m33;  m[8] = m34;
+																					 m[9] = m44;
 	}
 
 	// Make plane
 	SymetricMatrix(
-		const float a, 
-		const float b,
-		const float c,
-		const float d
+		const double a, 
+		const double b,
+		const double c,
+		const double d
 	) {
 		m[0] = a*a;  m[1] = a*b;  m[2] = a*c;  m[3] = a*d;
-			m[4] = b*b;  m[5] = b*c;  m[6] = b*d;
-				m[7 ] =c*c; m[8 ] = c*d;
-					m[9 ] = d*d;
+								 m[4] = b*b;  m[5] = b*c;  m[6] = b*d;
+														  m[7] = c*c;  m[8] = c*d;
+																					 m[9] = d*d;
 	}
 
-	float operator[](int c) const { return m[c]; }
+	double operator[](int c) const { return m[c]; }
 
 	// Determinant
-	float det(
+	double det(
 		const int a11, const int a12, const int a13,
 		const int a21, const int a22, const int a23,
 		const int a31, const int a32, const int a33
 	){
-		return static_cast<float>(
+		return static_cast<double>(
 			(m[a11]*m[a22]*m[a33]) + (m[a13]*m[a21]*m[a32]) + (m[a12]*m[a23]*m[a31])
 			- (m[a13]*m[a22]*m[a31]) - (m[a11]*m[a23]*m[a32]) - (m[a12]*m[a21]*m[a33])
 		);
@@ -287,8 +288,6 @@ class SymetricMatrix {
 		m[8]+=n[8];   m[9]+=n[9];
 		return *this;
 	}
-
-	float m[10];
 };
 ///////////////////////////////////////////
 
@@ -311,7 +310,7 @@ namespace Simplify
 		uint8_t attr;
 		vec3f n;
 		vec3f uvs[3];
-		int material; 
+		int16_t material; 
 	};
 	struct Vertex { 
 		vec3f p;
@@ -331,8 +330,8 @@ namespace Simplify
 
 	// Helper functions
 
-	double vertex_error(const SymetricMatrix& q, const float x, const float y, const float z);
-	float calculate_error(int id_v1, int id_v2, vec3f &p_result);
+	double vertex_error(const SymetricMatrix& q, const double x, const double y, const double z);
+	double calculate_error(int id_v1, int id_v2, vec3f &p_result);
 	bool flipped(vec3f p,int i0,int i1,Vertex &v0,Vertex &v1,std::vector<int> &deleted);
 	void update_uvs(int i0,const Vertex &v,const vec3f &p,std::vector<int> &deleted);
 	void update_triangles(int i0,Vertex &v,std::vector<int> &deleted,int &deleted_triangles);
@@ -367,6 +366,8 @@ namespace Simplify
 		int deleted_triangles = 0;
 		std::vector<int> deleted0, deleted1;
 		int triangle_count = triangles.size();
+
+		refs.reserve(triangle_count * 3);
 
 		for (int iteration = 0; iteration < max_iterations; iteration++) {
 			if (triangle_count - deleted_triangles <= target_count) {
@@ -832,9 +833,9 @@ namespace Simplify
 
 	double vertex_error(
 		const SymetricMatrix& q,
-		const float fx,
-		const float fy,
-		const float fz
+		const double fx,
+		const double fy,
+		const double fz
 	) {
 
 		const double x = fx;
@@ -856,7 +857,7 @@ namespace Simplify
 	}
 
 	// Error for one edge
-	float calculate_error(int id_v1, int id_v2, vec3f &p_result) {
+	double calculate_error(int id_v1, int id_v2, vec3f &p_result) {
 		// compute interpolated vertex
 
 		SymetricMatrix q = vertices[id_v1].q + vertices[id_v2].q;
@@ -883,7 +884,7 @@ namespace Simplify
 			if (error2 == error) p_result = p2;
 			if (error3 == error) p_result = p3;
 		}
-		return (float)error;
+		return (double)error;
 	}
 
 	char *trimwhitespace(char *str) {
