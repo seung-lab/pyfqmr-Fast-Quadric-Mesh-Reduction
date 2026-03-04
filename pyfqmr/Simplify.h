@@ -317,7 +317,7 @@ namespace Simplify
 		int tstart;
 		int tcount;
 		SymmetricMatrix q;
-		int border;
+		bool border;
 	};
 	struct Ref { 
 		int tid, tvertex; 
