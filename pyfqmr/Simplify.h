@@ -717,7 +717,7 @@ namespace Simplify
 			}
 		}
 
-		int tstart = 0;
+		uint32_t tstart = 0;
 		loopi(ZERO, vertices.size()) {
 			Vertex &v = vertices[i];
 			v.tstart = tstart;
@@ -744,20 +744,16 @@ namespace Simplify
 			std::vector<int> vcount,vids;
 
 			loopi(ZERO, vertices.size()) {
-				vertices[i].border = 0;
-			}
-
-			loopi(ZERO, vertices.size()) {
 				Vertex &v = vertices[i];
 				vcount.clear();
 				vids.clear();
 				
 				loopj(0, v.tcount) {
-					int k = trefs[v.tstart+j];
+					uint32_t k = trefs[v.tstart+j];
 					Triangle &t = triangles[k];
 					loopk(0,3) {
 						size_t ofs = 0;
-						int id = t.v[k];
+						uint32_t id = t.v[k];
 						while (ofs < vcount.size()) {
 							if (vids[ofs] == id) {
 								break;
@@ -775,9 +771,7 @@ namespace Simplify
 				}
 
 				loopj(ZERO, vcount.size()) {
-					if (vcount[j] == 1) {
-						vertices[vids[j]].border = 1;
-					}
+					vertices[vids[j]].border = (vcount[j] == 1);
 				}
 			}
 		}
