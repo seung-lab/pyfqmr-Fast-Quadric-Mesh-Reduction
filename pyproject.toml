@@ -2,15 +2,8 @@
 build-backend = "setuptools.build_meta"
 requires = [
   "setuptools >= 61.0",
-  "cython",
-  # Force (currently only prereleased) free threaded Python supporting Cython
-  "cython >= 3.1.0a1; python_version >= '3.13'",
-  # New cython breaks with old numpy
-  "cython < 3; python_version < '3.9'",
-  # See https://github.com/scipy/oldest-supported-numpy/blob/687ffc2f57e29ec7c74a28c58c247d16d0f6bee1/README.rst#deprecation-notice-for-numpy-20
-  # although beware that most of the versions are wrong...
-  "numpy >= 2.0, <3; python_version >= '3.9'",
-  "oldest-supported-numpy; python_version < '3.9'",
+  "pybind11",
+  "numpy",
 ]
 
 [project]
@@ -18,7 +11,7 @@ name = "pyfqmr"
 authors = [
   { name = "kramer84" },
 ]
-description = "cython wrapper around C++ library for fast triangular mesh reduction"
+description = "pybind11 wrapper around C++ library for fast triangular mesh reduction"
 readme = "README.rst"
 license = { text = "MIT" }
 
