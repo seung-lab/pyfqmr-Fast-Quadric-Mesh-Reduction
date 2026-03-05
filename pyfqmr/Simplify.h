@@ -316,11 +316,11 @@ struct Mesh {
 		vertices.clear();
 		triangles.clear();
 
-		uint64_t N_vertices = verts.size();
-		uint64_t N_faces = faces.size();
+		uint64_t N_vertices = verts.size() / 3;
+		uint64_t N_faces = faces.size() / 3;
 		
 		vertices.reserve(N_vertices * 3);
-		faces.reserve(N_faces * 3);
+		triangles.reserve(N_faces * 3);
 
 		for (uint64_t i = 0; i < N_vertices * 3; i += 3) {
 			Vertex v;
