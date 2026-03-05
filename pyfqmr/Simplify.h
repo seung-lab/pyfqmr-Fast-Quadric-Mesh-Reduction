@@ -164,15 +164,7 @@ struct vec3f {
 	inline vec3f normalize( double desired_length = 1 )
 	{
 		double square = sqrt(x*x + y*y + z*z);
-		/*
-		if (square <= 0.00001f )
-		{
-			x=1;y=0;z=0;
-			return *this;
-		}*/
-		//double len = desired_length / square;
 		x/=square;y/=square;z/=square;
-
 		return *this;
 	}
 	static vec3f normalize( vec3f a );
@@ -302,6 +294,33 @@ struct Vertex {
 	bool border;
 };
 
+// Pairs triangle index and vertex slot (0/1/2) within that triangle.
+// The two arrays are always the same length and indexed together,
+// so they are kept as a single struct to make that invariant explicit.
+struct RefList {
+	std::vector<uint32_t> tris;  // triangle index
+	std::vector<uint8_t>  verts; // vertex slot within that triangle (0, 1, or 2)
+
+	void resize(size_t n) {
+		tris.resize(n);
+		verts.resize(n);
+	}
+
+	void reserve(size_t n) {
+		tris.reserve(n);
+		verts.reserve(n);
+	}
+
+	size_t size() const {
+		return tris.size();
+	}
+
+	void push_back(uint32_t tri, uint8_t vert) {
+		tris.push_back(tri);
+		verts.push_back(vert);
+	}
+};
+
 struct Mesh {
 	std::vector<Triangle> triangles;
 	std::vector<Vertex> vertices;
@@ -394,8 +413,7 @@ double calculate_error(
 bool flipped(
 	const std::vector<Triangle>& triangles,
 	const std::vector<Vertex>& vertices, 
-	const std::vector<uint32_t>& trefs,
-	const std::vector<uint8_t>& vrefs,
+	const RefList& refs,
 	vec3f p,
 	uint32_t i0,
 	uint32_t i1,
@@ -406,8 +424,7 @@ bool flipped(
 void update_uvs(
 	std::vector<Triangle>& triangles,
 	const std::vector<Vertex>& vertices, 
-	const std::vector<uint32_t>& trefs,
-	const std::vector<uint8_t>& vrefs,
+	const RefList& refs,
 	uint32_t i0,
 	const Vertex &v,
 	const vec3f &p,
@@ -416,8 +433,7 @@ void update_uvs(
 void update_triangles(
 	std::vector<Triangle>& triangles,
 	const std::vector<Vertex>& vertices,
-	std::vector<uint32_t>& trefs,
-	std::vector<uint8_t>& vrefs,
+	RefList& refs,
 	uint32_t i0,
 	Vertex& v,
 	std::vector<int>& deleted,
@@ -426,8 +442,7 @@ void update_triangles(
 void update_mesh(
 	std::vector<Triangle>& triangles,
 	std::vector<Vertex>& vertices,
-	std::vector<uint32_t>& trefs,
-	std::vector<uint8_t>& vrefs,
+	RefList& refs,
 	int iteration
 );
 void compact_mesh(
@@ -455,8 +470,7 @@ void simplify_mesh(
 	double threshold_lossless = 0.0001,
 	bool preserve_border = false
 ) {
-	std::vector<uint32_t> trefs;
-	std::vector<uint8_t> vrefs;
+	RefList refs;
 
 	auto& triangles = mesh.triangles;
 	auto& vertices = mesh.vertices;
@@ -477,7 +491,7 @@ void simplify_mesh(
 
 		// update mesh once in a while
 		if ((iteration % update_rate == 0) || lossless) {
-			update_mesh(triangles, vertices, trefs, vrefs, iteration);
+			update_mesh(triangles, vertices, refs, iteration);
 		}
 
 		loopi(ZERO, triangles.size()) {
@@ -523,33 +537,33 @@ void simplify_mesh(
 					deleted0.resize(v0.tcount); // normals temporarily
 					deleted1.resize(v1.tcount); // normals temporarily
 					// don't remove if flipped
-					if (flipped(triangles,vertices,trefs,vrefs,p,i0,i1,v0,v1,deleted0)) {
+					if (flipped(triangles,vertices,refs,p,i0,i1,v0,v1,deleted0)) {
 						continue;
 					}
-					if (flipped(triangles,vertices,trefs,vrefs,p,i1,i0,v1,v0,deleted1)) {
+					if (flipped(triangles,vertices,refs,p,i1,i0,v1,v0,deleted1)) {
 						continue;
 					}
 
 					if ((t.attr & TEXCOORD) == TEXCOORD) {
-						update_uvs(triangles,vertices,trefs,vrefs,i0,v0,p,deleted0);
-						update_uvs(triangles,vertices,trefs,vrefs,i0,v1,p,deleted1);
+						update_uvs(triangles,vertices,refs,i0,v0,p,deleted0);
+						update_uvs(triangles,vertices,refs,i0,v1,p,deleted1);
 					}
 
 					// not flipped, so remove edge
 					v0.p = p;
 					v0.q = v1.q + v0.q;
-					auto tstart = trefs.size();
+					auto tstart = refs.size();
 
-					update_triangles(triangles,vertices, trefs, vrefs, i0, v0, deleted0, deleted_triangles);
-					update_triangles(triangles,vertices, trefs, vrefs, i0, v1, deleted1, deleted_triangles);
+					update_triangles(triangles,vertices,refs,i0,v0,deleted0,deleted_triangles);
+					update_triangles(triangles,vertices,refs,i0,v1,deleted1,deleted_triangles);
 
-					auto tcount = trefs.size() - tstart;
+					auto tcount = refs.size() - tstart;
 
 					if (tcount <= v0.tcount) {
 						// save ram
 						if (tcount) {
-							memcpy(&trefs[v0.tstart], &trefs[tstart], tcount * sizeof(uint32_t));
-							memcpy(&vrefs[v0.tstart], &vrefs[tstart], tcount * sizeof(uint8_t));
+							memcpy(&refs.tris[v0.tstart],  &refs.tris[tstart],  tcount * sizeof(uint32_t));
+							memcpy(&refs.verts[v0.tstart], &refs.verts[tstart], tcount * sizeof(uint8_t));
 						}
 					}
 					else {
@@ -583,8 +597,7 @@ void simplify_mesh_lossless(
 	int max_iterations = 9999,
 	bool preserve_border = false
 ) {
-	std::vector<uint32_t> trefs;
-	std::vector<uint8_t> vrefs;
+	RefList refs;
 
 	auto& triangles = mesh.triangles;
 	auto& vertices = mesh.vertices;
@@ -598,7 +611,7 @@ void simplify_mesh_lossless(
 
 	for (int iteration = 0; iteration < max_iterations; iteration++) {
 		// update mesh constantly
-		update_mesh(triangles, vertices, trefs, vrefs, iteration);
+		update_mesh(triangles, vertices, refs, iteration);
 		// clear dirty flag
 		loopi(ZERO, triangles.size()) triangles[i].dirty = 0;
 		//
@@ -644,29 +657,29 @@ void simplify_mesh_lossless(
 					deleted1.resize(v1.tcount); // normals temporarily
 
 					// don't remove if flipped
-					if (flipped(triangles,vertices,trefs,vrefs,p,i0,i1,v0,v1,deleted0)) continue;
-					if (flipped(triangles,vertices,trefs,vrefs,p,i1,i0,v1,v0,deleted1)) continue;
+					if (flipped(triangles,vertices,refs,p,i0,i1,v0,v1,deleted0)) continue;
+					if (flipped(triangles,vertices,refs,p,i1,i0,v1,v0,deleted1)) continue;
 
 					if ((t.attr & TEXCOORD) == TEXCOORD) {
-						update_uvs(triangles,vertices,trefs,vrefs,i0,v0,p,deleted0);
-						update_uvs(triangles,vertices,trefs,vrefs,i0,v1,p,deleted1);
+						update_uvs(triangles,vertices,refs,i0,v0,p,deleted0);
+						update_uvs(triangles,vertices,refs,i0,v1,p,deleted1);
 					}
 
 					// not flipped, so remove edge
 					v0.p = p;
 					v0.q = v1.q + v0.q;
-					auto tstart = trefs.size();
+					auto tstart = refs.size();
 
-					update_triangles(triangles,vertices,trefs,vrefs,i0,v0,deleted0,deleted_triangles);
-					update_triangles(triangles,vertices,trefs,vrefs,i0,v1,deleted1,deleted_triangles);
+					update_triangles(triangles,vertices,refs,i0,v0,deleted0,deleted_triangles);
+					update_triangles(triangles,vertices,refs,i0,v1,deleted1,deleted_triangles);
 
-					auto tcount = trefs.size() - tstart;
+					auto tcount = refs.size() - tstart;
 
 					if (tcount <= v0.tcount) {
 						// save ram
 						if (tcount) {
-							memcpy(&trefs[v0.tstart], &trefs[tstart], tcount * sizeof(uint32_t));
-							memcpy(&vrefs[v0.tstart], &vrefs[tstart], tcount * sizeof(uint8_t));
+							memcpy(&refs.tris[v0.tstart],  &refs.tris[tstart],  tcount * sizeof(uint32_t));
+							memcpy(&refs.verts[v0.tstart], &refs.verts[tstart], tcount * sizeof(uint8_t));
 						}
 					}
 					else {
@@ -692,8 +705,7 @@ void simplify_mesh_lossless(
 bool flipped(
 	const std::vector<Triangle>& triangles,
 	const std::vector<Vertex>& vertices,
-	const std::vector<uint32_t>& trefs,
-	const std::vector<uint8_t>& vrefs,
+	const RefList& refs,
 	vec3f p,
 	uint32_t i0,
 	uint32_t i1,
@@ -702,10 +714,10 @@ bool flipped(
 	std::vector<int>& deleted
 ) {
 	for (uint32_t k = 0; k < v0.tcount; k++) {
-		const Triangle &t = triangles[trefs[v0.tstart+k]];
+		const Triangle &t = triangles[refs.tris[v0.tstart+k]];
 		if (t.deleted) continue;
 
-		auto s = vrefs[v0.tstart+k];
+		auto s = refs.verts[v0.tstart+k];
 		auto id1 = t.v[(s+1)%3];
 		auto id2 = t.v[(s+2)%3];
 
@@ -737,16 +749,15 @@ bool flipped(
 void update_uvs(
 	std::vector<Triangle>& triangles,
 	const std::vector<Vertex>& vertices, 
-	const std::vector<uint32_t>& trefs,
-	const std::vector<uint8_t>& vrefs,
+	const RefList& refs,
 	uint32_t i0,
 	const Vertex &v,
 	const vec3f &p,
 	std::vector<int> &deleted
 ) {
 	for (uint32_t k = 0; k < v.tcount; k++) {
-		auto tid = trefs[v.tstart+k];
-		auto tvertex = vrefs[v.tstart+k];
+		auto tid     = refs.tris[v.tstart+k];
+		auto tvertex = refs.verts[v.tstart+k];
 
 		Triangle &t = triangles[tid];
 		if (t.deleted) {
@@ -767,8 +778,7 @@ void update_uvs(
 void update_triangles(
 	std::vector<Triangle>& triangles,
 	const std::vector<Vertex>& vertices, 
-	std::vector<uint32_t>& trefs,
-	std::vector<uint8_t>& vrefs,
+	RefList& refs,
 	uint32_t i0,
 	Vertex &v,
 	std::vector<int> &deleted,
@@ -776,8 +786,8 @@ void update_triangles(
 ) {
 	vec3f p;
 	for (uint32_t k = 0; k < v.tcount; k++) {
-		auto tid = trefs[v.tstart+k];
-		auto tvertex = vrefs[v.tstart+k];
+		auto tid     = refs.tris[v.tstart+k];
+		auto tvertex = refs.verts[v.tstart+k];
 
 		Triangle &t = triangles[tid];
 		if (t.deleted) {
@@ -796,8 +806,7 @@ void update_triangles(
 		t.err[2] = calculate_error(vertices, t.v[2], t.v[0], p);
 		t.err[3] = min(t.err[0], min(t.err[1],t.err[2]));
 		
-		trefs.push_back(tid);
-		vrefs.push_back(tvertex);
+		refs.push_back(tid, tvertex);
 	}
 }
 
@@ -805,8 +814,7 @@ void update_triangles(
 void update_mesh(
 	std::vector<Triangle>& triangles,
 	std::vector<Vertex>& vertices,
-	std::vector<uint32_t>& trefs,
-	std::vector<uint8_t>& vrefs,
+	RefList& refs,
 	int iteration
 ) {
 	if (iteration > 0) { // compact triangles
@@ -840,15 +848,14 @@ void update_mesh(
 	}
 
 	// Write References
-	trefs.resize(triangles.size()*3);
-	vrefs.resize(triangles.size()*3);
+	refs.resize(triangles.size()*3);
 
 	loopi(ZERO, triangles.size()) {
 		Triangle &t = triangles[i];
 		loopj(0,3) {
 			Vertex &v = vertices[t.v[j]];
-			trefs[v.tstart+v.tcount] = i;
-			vrefs[v.tstart+v.tcount] = j;
+			refs.tris[v.tstart+v.tcount]  = i;
+			refs.verts[v.tstart+v.tcount] = j;
 			v.tcount++;
 		}
 	}
@@ -863,7 +870,7 @@ void update_mesh(
 			vids.clear();
 			
 			for (uint32_t j = 0; j < v.tcount; j++) {
-				uint32_t k = trefs[v.tstart+j];
+				uint32_t k = refs.tris[v.tstart+j];
 				Triangle &t = triangles[k];
 				loopk(0,3) {
 					size_t ofs = 0;
@@ -961,7 +968,6 @@ void compact_mesh(
 }
 
 // Error between vertex and Quadric
-
 double vertex_error(
 	const SymmetricMatrix& q,
 	const double x,
@@ -990,10 +996,9 @@ double calculate_error(
 	vec3f &p_result
 ) {
 	// compute interpolated vertex
-
 	SymmetricMatrix q = vertices[id_v1].q;
 	q += vertices[id_v2].q;
-	bool border = vertices[id_v1].border & vertices[id_v2].border;
+	bool border = vertices[id_v1].border && vertices[id_v2].border;
 	double error = 0;
 	double det = q.det(0, 1, 2, 1, 4, 5, 2, 5, 7);
 	if (det != 0 && !border) {
@@ -1197,7 +1202,7 @@ void write_obj(const Mesh& mesh, const char* filename) {
 		fprintf(file, "mtllib %s\n", mtllib.c_str());
 	}
 	loopi(ZERO, vertices.size()) {
-		fprintf(file, "v %g %g %g\n", vertices[i].p.x,vertices[i].p.y,vertices[i].p.z); // more compact: remove trailing zeros
+		fprintf(file, "v %g %g %g\n", vertices[i].p.x,vertices[i].p.y,vertices[i].p.z);
 	}
 
 	if (has_uv) {
