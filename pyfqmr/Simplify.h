@@ -344,7 +344,7 @@ struct Mesh {
 		std::vector<float> verts;
 		const uint64_t N_vertices = vertices.size();
 		verts.reserve(N_vertices * 3);
-		loopi(0,N_vertices) {
+		for (uint64_t i = 0; i < N_vertices; i++) {
 			verts.push_back(vertices[i].p.x);
 			verts.push_back(vertices[i].p.y);
 			verts.push_back(vertices[i].p.z);
@@ -356,7 +356,7 @@ struct Mesh {
 		std::vector<uint32_t> faces;
 		const uint64_t N_faces = triangles.size();
 		faces.reserve(N_faces * 3);
-		loopi(0,N_faces) {
+		for (uint64_t i = 0; i < N_faces; i++) {
 			faces.push_back(triangles[i].v[0]);
 			faces.push_back(triangles[i].v[1]);
 			faces.push_back(triangles[i].v[2]);
@@ -368,7 +368,7 @@ struct Mesh {
 		std::vector<float> normals;
 		const uint64_t N_faces = triangles.size();
 		normals.reserve(N_faces * 3);
-		loopi(0, N_faces) {
+		for (uint64_t i = 0; i < N_faces; i++) {
 			normals.push_back(triangles[i].n.x);
 			normals.push_back(triangles[i].n.y);
 			normals.push_back(triangles[i].n.z);
@@ -445,7 +445,7 @@ void compact_mesh(
 //
 void simplify_mesh(
 	Mesh& mesh,
-	uint64_t target_count, 
+	int64_t target_count, 
 	int update_rate = 5, 
 	double agressiveness = 7,
 	int max_iterations = 100,
@@ -701,7 +701,7 @@ bool flipped(
 	Vertex& v1,
 	std::vector<int>& deleted
 ) {
-	loopk(0, v0.tcount) {
+	for (uint32_t k = 0; k < v0.tcount; k++) {
 		const Triangle &t = triangles[trefs[v0.tstart+k]];
 		if (t.deleted) continue;
 
@@ -744,7 +744,7 @@ void update_uvs(
 	const vec3f &p,
 	std::vector<int> &deleted
 ) {
-	loopk(0, v.tcount) {
+	for (uint32_t k = 0; k < v.tcount; k++) {
 		auto tid = trefs[v.tstart+k];
 		auto tvertex = vrefs[v.tstart+k];
 
@@ -775,7 +775,7 @@ void update_triangles(
 	int64_t &deleted_triangles
 ) {
 	vec3f p;
-	loopk(0, v.tcount) {
+	for (uint32_t k = 0; k < v.tcount; k++) {
 		auto tid = trefs[v.tstart+k];
 		auto tvertex = vrefs[v.tstart+k];
 
@@ -862,7 +862,7 @@ void update_mesh(
 			vcount.clear();
 			vids.clear();
 			
-			loopj(0, v.tcount) {
+			for (uint32_t j = 0; j < v.tcount; j++) {
 				uint32_t k = trefs[v.tstart+j];
 				Triangle &t = triangles[k];
 				loopk(0,3) {
