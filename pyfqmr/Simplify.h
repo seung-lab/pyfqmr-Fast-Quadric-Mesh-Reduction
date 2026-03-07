@@ -288,7 +288,7 @@ namespace Simplify
 {
   // Global Variables & Strctures
   enum Attributes {
-    NONE,
+    NONE = 0,
     NORMAL = 2,
     TEXCOORD = 4,
     COLOR = 8
