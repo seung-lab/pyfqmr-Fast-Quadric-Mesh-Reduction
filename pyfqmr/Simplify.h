@@ -929,9 +929,9 @@ namespace Simplify
         }
         else
         {
-          printf("unrecognized sequence\n");
+          printf("load_obj: unrecognized sequence\n");
           printf("%s\n",line);
-          while(1);
+          exit(0);
         }
         if ( tri_ok )
         {
